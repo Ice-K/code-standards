@@ -1,0 +1,19 @@
+{
+  "name": "code-standards",
+  "description": "编码规范守卫插件 - 为 AI 编程助手提供 Java/Spring/Vue 等语言的编码规范，确保生成的代码符合业界标准和团队约定",
+  "version": "0.1.0",
+  "author": {
+    "name": "super-every-code"
+  },
+  "homepage": "https://github.com/user/code-standards",
+  "license": "MIT",
+  "keywords": [
+    "coding-standards",
+    "java",
+    "springboot",
+    "springcloud",
+    "vue",
+    "code-review",
+    "best-practices"
+  ]
+}
