@@ -1,3 +1,14 @@
+---
+id: vue3-state-management
+title: Vue3 - Pinia 状态管理规范
+tags: [vue3, pinia, store, state, persistence]
+trigger:
+  extensions: [.ts]
+  frameworks: [vue3]
+skip:
+  keywords: [配置文件, yml, properties, SQL, Mapper, 后端, REST, 接口]
+---
+
 # Vue3 - Pinia 状态管理规范
 
 ## 适用范围

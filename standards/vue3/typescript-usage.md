@@ -1,3 +1,14 @@
+---
+id: vue3-typescript-usage
+title: Vue3 - TypeScript 使用规范
+tags: [vue3, typescript, interface, generic, type-guard]
+trigger:
+  extensions: [.vue, .ts]
+  frameworks: [vue3]
+skip:
+  keywords: [SQL, Mapper, 数据库, 配置文件, yml, properties, 后端]
+---
+
 # Vue3 - TypeScript 使用规范
 
 ## 适用范围

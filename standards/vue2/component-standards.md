@@ -1,3 +1,14 @@
+---
+id: vue2-component-standards
+title: Vue2 - Options API 组件编写规范
+tags: [vue2, component, options-api, props, emit]
+trigger:
+  extensions: [.vue]
+  frameworks: [vue2]
+skip:
+  keywords: [SQL, Mapper, 数据库, 配置文件, yml, properties, 后端]
+---
+
 # Vue2 - Options API 组件编写规范
 
 ## 适用范围

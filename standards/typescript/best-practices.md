@@ -1,3 +1,14 @@
+---
+id: typescript-best-practices
+title: TypeScript - 最佳实践
+tags: [typescript, best-practices, strict, unknown, satisfies]
+trigger:
+  extensions: [.ts, .tsx]
+  frameworks: []
+skip:
+  keywords: [SQL, Mapper, 数据库, 后端, Spring, MyBatis]
+---
+
 # TypeScript - 最佳实践
 
 ## 适用范围

@@ -17,16 +17,46 @@ const extractFrontmatter = (content) => {
   return match[2];
 };
 
-const getGuardContent = () => {
-  const skillPath = path.resolve(__dirname, '../../skills/code-standards/SKILL.md');
-  if (!fs.existsSync(skillPath)) return null;
+const getProfileConfig = (projectDir) => {
+  const configPath = path.resolve(projectDir || process.cwd(), '.codestandardsrc.json');
+  try {
+    if (fs.existsSync(configPath)) {
+      const raw = fs.readFileSync(configPath, 'utf8');
+      const config = JSON.parse(raw);
+      return {
+        profile: ['core', 'recommended', 'extended'].includes(config.profile) ? config.profile : 'recommended',
+        disabledRules: Array.isArray(config.disabledRules) ? config.disabledRules : [],
+        disabledFiles: Array.isArray(config.disabledFiles) ? config.disabledFiles : [],
+      };
+    }
+  } catch (e) {
+    console.warn('[code-standards] Failed to read .codestandardsrc.json:', e.message);
+  }
+  return { profile: 'recommended', disabledRules: [], disabledFiles: [] };
+};
 
-  const fullContent = fs.readFileSync(skillPath, 'utf8');
-  const body = extractFrontmatter(fullContent);
+const getGuardContent = (projectDir) => {
+  try {
+    const skillPath = path.resolve(__dirname, '../../skills/code-standards/SKILL.md');
+    if (!fs.existsSync(skillPath)) return null;
 
-  return `<CODE_STANDARDS_GUARD>
+    const fullContent = fs.readFileSync(skillPath, 'utf8');
+    const body = extractFrontmatter(fullContent);
+    const profileConfig = getProfileConfig(projectDir);
+
+    const profileInfo = `当前配置 Profile: ${profileConfig.profile}` +
+      (profileConfig.disabledRules.length ? ` | 禁用规则: ${profileConfig.disabledRules.join(', ')}` : '') +
+      (profileConfig.disabledFiles.length ? ` | 禁用文件: ${profileConfig.disabledFiles.length}个` : '');
+
+    return `<CODE_STANDARDS_GUARD>
+${profileInfo}
+
 ${body}
 </CODE_STANDARDS_GUARD>`;
+  } catch (e) {
+    console.warn('[code-standards] Failed to load guard content:', e.message);
+    return null;
+  }
 };
 
 export const CodeStandardsPlugin = async ({ client, directory }) => {
@@ -44,7 +74,7 @@ export const CodeStandardsPlugin = async ({ client, directory }) => {
 
     // 注入守卫到首条用户消息
     'experimental.chat.messages.transform': async (_input, output) => {
-      const guard = getGuardContent();
+      const guard = getGuardContent(directory);
       if (!guard || !output.messages.length) return;
 
       const firstUser = output.messages.find(m => m.info.role === 'user');

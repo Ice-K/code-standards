@@ -1,3 +1,14 @@
+---
+id: vue3-composition-api
+title: Vue3 - Composition API 规范
+tags: [vue3, composition-api, ref, reactive, computed, watch]
+trigger:
+  extensions: [.vue, .ts]
+  frameworks: [vue3]
+skip:
+  keywords: [SQL, Mapper, 数据库, 配置文件, yml, properties, 后端]
+---
+
 # Vue3 - Composition API 规范
 
 ## 适用范围

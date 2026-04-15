@@ -1,3 +1,14 @@
+---
+id: vue2-project-structure
+title: Vue2 - 项目目录结构约定
+tags: [vue2, project-structure, vue-cli, directory]
+trigger:
+  extensions: [.vue, .js]
+  frameworks: [vue2]
+skip:
+  keywords: [SQL, Mapper, 数据库, 后端, Spring, MyBatis]
+---
+
 # Vue2 - 项目目录结构约定
 
 ## 适用范围

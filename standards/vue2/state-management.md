@@ -1,3 +1,14 @@
+---
+id: vue2-state-management
+title: Vue2 - Vuex 状态管理规范
+tags: [vue2, vuex, store, mutation, action]
+trigger:
+  extensions: [.js]
+  frameworks: [vue2]
+skip:
+  keywords: [配置文件, yml, properties, SQL, Mapper, 后端, REST, 接口]
+---
+
 # Vue2 - Vuex 状态管理规范
 
 ## 适用范围

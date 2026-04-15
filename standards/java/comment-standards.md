@@ -1,3 +1,14 @@
+---
+id: java-comment-standards
+title: Java - 代码注释规范
+tags: [java, comment, javadoc, documentation]
+trigger:
+  extensions: [.java]
+  frameworks: []
+skip:
+  keywords: []
+---
+
 # Java - 代码注释规范
 
 ## 适用范围

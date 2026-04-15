@@ -1,49 +1,25 @@
+---
+id: springboot-api-design
+title: Spring Boot - RESTful API 设计规范
+tags: [springboot, api, restful, controller, swagger]
+trigger:
+  extensions: [.java]
+  frameworks: [springboot]
+skip:
+  keywords: [组件, 页面, UI, CSS, 样式, 配置文件, yml, properties]
+---
+
 # Spring Boot - RESTful API 设计规范
 
 ## 适用范围
 - 适用于所有 Spring Boot 项目对外暴露的 RESTful API 接口
 - 与项目目录结构约定、数据访问层规范配合使用
 - 前后端分离项目的后端接口设计必须遵循
+- URL 命名复数、参数绑定方式、文件上传、接口版本管理等基础实践不再列出，AI 默认遵守
 
 ## 规则
 
-### R1: URL 使用名词复数
-**级别**: 必须
-**描述**: API 路径使用名词复数形式表示资源集合，不在 URL 中使用动词描述操作。
-**正例**:
-```java
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-
-    @GetMapping
-    public Result<PageResult<UserVO>> list() { ... }
-
-    @PostMapping
-    public Result<Void> create(@RequestBody UserCreateDTO dto) { ... }
-
-    @GetMapping("/{id}")
-    public Result<UserVO> getById(@PathVariable Long id) { ... }
-}
-```
-**反例**:
-```java
-@RestController
-@RequestMapping("/api")
-public class UserController {
-
-    @GetMapping("/getUserList")          // URL 中包含动词
-    public Result<List<UserVO>> list() { ... }
-
-    @PostMapping("/createUser")          // URL 中包含动词
-    public Result<Void> create(@RequestBody UserCreateDTO dto) { ... }
-
-    @GetMapping("/user")                 // 单数形式
-    public Result<UserVO> getById(@RequestParam Long id) { ... }
-}
-```
-
-### R2: HTTP 方法语义正确
+### R1: HTTP 方法语义正确
 **级别**: 必须
 **描述**: 正确使用 HTTP 方法语义：GET 查询、POST 新增、PUT 全量修改、DELETE 删除、PATCH 部分更新。
 **正例**:
@@ -91,7 +67,7 @@ public class OrderController {
 }
 ```
 
-### R3: 统一返回体 Result<T> 包装
+### R2: 统一返回体 Result<T> 包装
 **级别**: 必须
 **描述**: 所有接口统一使用 Result<T> 包装返回值，包含 code（状态码）、message（提示信息）、data（业务数据）三个字段。
 **正例**:
@@ -151,7 +127,7 @@ public ResponseEntity<ApiResponse<UserVO>> getById(@PathVariable Long id) { ... 
 public JsonResult<Long> create(@RequestBody UserCreateDTO dto) { ... }
 ```
 
-### R4: 使用 @Valid + JSR303 做参数校验
+### R3: 使用 @Valid + JSR303 做参数校验
 **级别**: 必须
 **描述**: 使用 JSR303 注解对请求参数进行校验，结合 @Valid 或 @Validated 触发校验，避免在业务代码中手动校验。
 **正例**:
@@ -200,7 +176,7 @@ public Result<Long> create(@RequestBody UserCreateDTO dto) {
 }
 ```
 
-### R5: 全局异常处理 @RestControllerAdvice
+### R4: 全局异常处理 @RestControllerAdvice
 **级别**: 必须
 **描述**: 使用 @RestControllerAdvice + @ExceptionHandler 统一处理异常，避免异常信息直接暴露给前端。
 **正例**:
@@ -250,12 +226,12 @@ public Result<Long> create(@Valid @RequestBody UserCreateDTO dto) {
 // 前端收到: {"timestamp":"2024-01-01T00:00:00.000+00:00","status":500,"error":"Internal Server Error"...}
 ```
 
-### R6: 分页接口使用 PageRequest/PageResult 封装
+### R5: 分页接口使用 PageRequest 封装
 **级别**: 推荐
-**描述**: 分页查询接口统一使用自定义的 PageRequest 和 PageResult 对象封装分页参数和结果。
+**描述**: 分页查询接口统一使用自定义的 PageRequest 基类封装分页参数，各查询 DTO 继承 PageRequest。
 **正例**:
 ```java
-// 分页请求对象
+// 分页请求基类
 @Data
 public class PageRequest {
     @Min(value = 1, message = "页码最小为1")
@@ -266,27 +242,17 @@ public class PageRequest {
     private int pageSize = 10;
 }
 
-// 分页结果对象
+// 查询 DTO 继承分页基类
 @Data
-public class PageResult<T> {
-    private List<T> records;
-    private long total;
-    private int pageNum;
-    private int pageSize;
-
-    public static <T> PageResult<T> of(List<T> records, long total, int pageNum, int pageSize) {
-        PageResult<T> result = new PageResult<>();
-        result.setRecords(records);
-        result.setTotal(total);
-        result.setPageNum(pageNum);
-        result.setPageSize(pageSize);
-        return result;
-    }
+@EqualsAndHashCode(callSuper = true)
+public class UserQueryDTO extends PageRequest {
+    private String keyword;
+    private Integer status;
 }
 
 // Controller 使用
 @GetMapping
-public Result<PageResult<UserVO>> list(@Valid UserQueryDTO query) {
+public Result<Page<UserVO>> list(@Valid UserQueryDTO query) {
     return Result.success(userService.page(query));
 }
 ```
@@ -298,120 +264,16 @@ public Result<Map<String, Object>> list(
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(required = false) String keyword) {
-    // 手动构建分页结果
     Map<String, Object> result = new HashMap<>();
     result.put("list", userService.list(keyword, page, size));
     result.put("total", userService.count(keyword));
-    result.put("page", page);
-    result.put("size", size);
     return Result.success(result);
 }
-
-// 直接暴露 MyBatis-Plus 的 Page 对象
-@GetMapping
-public Result<Page<User>> list(@RequestParam int current, @RequestParam int size) {
-    return Result.success(userMapper.selectPage(new Page<>(current, size), null));
-}
 ```
 
-### R7: 接口版本管理
-**级别**: 建议
-**描述**: API 路径中包含版本号，便于接口升级和兼容性管理，推荐使用 /api/v{version}/资源 格式。
-**正例**:
-```java
-// V1 版本
-@RestController
-@RequestMapping("/api/v1/users")
-public class UserV1Controller {
-
-    @GetMapping("/{id}")
-    public Result<UserVO> getById(@PathVariable Long id) {
-        return Result.success(userService.getById(id));
-    }
-}
-
-// V2 版本（新增字段或修改逻辑）
-@RestController
-@RequestMapping("/api/v2/users")
-public class UserV2Controller {
-
-    @GetMapping("/{id}")
-    public Result<UserV2VO> getById(@PathVariable Long id) {
-        return Result.success(userService.getByIdV2(id));
-    }
-}
-```
-**反例**:
-```java
-// 没有版本号，直接修改接口导致旧客户端不兼容
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-
-    @GetMapping("/{id}")
-    public Result<UserVO> getById(@PathVariable Long id) {
-        // 直接修改返回结构，前端未同步更新会导致异常
-        return Result.success(userService.getById(id));
-    }
-}
-
-// 通过自定义 Header 传递版本号，不够直观
-@GetMapping(value = "/{id}", headers = "API-Version=2")
-public Result<UserVO> getById(@PathVariable Long id) { ... }
-```
-
-### R8: 参数绑定方式正确
+### R6: 请求体使用 @RequestBody + DTO 接收
 **级别**: 必须
-**描述**: 查询参数使用 @RequestParam，路径参数使用 @PathVariable，请求体使用 @RequestBody，明确区分参数来源。
-**正例**:
-```java
-@RestController
-@RequestMapping("/api/users")
-public class UserController {
-
-    // 路径参数 - 标识具体资源
-    @GetMapping("/{id}")
-    public Result<UserVO> getById(@PathVariable Long id) { ... }
-
-    // 查询参数 - 过滤条件
-    @GetMapping
-    public Result<PageResult<UserVO>> list(
-            @RequestParam(defaultValue = "1") int pageNum,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String keyword) { ... }
-
-    // 请求体 - 创建资源
-    @PostMapping
-    public Result<Long> create(@Valid @RequestBody UserCreateDTO dto) { ... }
-}
-```
-**反例**:
-```java
-// 混用参数绑定方式
-@PostMapping("/{id}")
-public Result<Void> update(
-        @PathVariable Long id,
-        @RequestParam String username,     // 应该用 @RequestBody 接收
-        @RequestParam String email) { ... }
-
-// 使用 HttpServletRequest 手动获取参数
-@GetMapping
-public Result<PageResult<UserVO>> list(HttpServletRequest request) {
-    String keyword = request.getParameter("keyword");
-    int pageNum = Integer.parseInt(request.getParameter("pageNum"));
-    // ...
-}
-
-// 路径参数和查询参数混用不明确
-@GetMapping("/search/{keyword}")
-public Result<List<UserVO>> search(
-        @PathVariable String keyword,
-        @RequestParam int pageNum) { ... }
-```
-
-### R9: 请求体使用 @RequestBody + DTO 接收
-**级别**: 必须
-**描述**: POST/PUT/PATCH 请求使用 @RequestBody 接收 JSON 请求体，并通过专门的 DTO 类封装参数。
+**描述**: POST/PUT/PATCH 请求使用 @RequestBody 接收 JSON 请求体，并通过专门的 DTO 类封装参数。创建和更新使用不同的 DTO。
 **正例**:
 ```java
 // 创建用户 DTO
@@ -479,7 +341,7 @@ public class UserDTO {
 }
 ```
 
-### R10: Controller 只做参数校验和调用 Service
+### R7: Controller 只做参数校验和调用 Service
 **级别**: 必须
 **描述**: Controller 层职责单一，只负责接收参数、参数校验、调用 Service、返回结果，不包含任何业务逻辑。
 **正例**:
@@ -537,63 +399,9 @@ public class UserController {
 }
 ```
 
-### R11: 文件上传接口使用 MultipartFile
-**级别**: 必须
-**描述**: 文件上传接口使用 MultipartFile 接收文件，并限制文件大小和类型。
-**正例**:
-```java
-@RestController
-@RequestMapping("/api/files")
-public class FileController {
-
-    private final FileService fileService;
-
-    @PostMapping("/upload")
-    public Result<String> upload(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "type", defaultValue = "common") String type) {
-
-        // 校验文件大小（10MB）
-        if (file.getSize() > 10 * 1024 * 1024) {
-            return Result.fail(400, "文件大小不能超过10MB");
-        }
-
-        // 校验文件类型
-        String contentType = file.getContentType();
-        List<String> allowedTypes = List.of("image/jpeg", "image/png", "application/pdf");
-        if (!allowedTypes.contains(contentType)) {
-            return Result.fail(400, "不支持的文件类型");
-        }
-
-        String url = fileService.upload(file, type);
-        return Result.success(url);
-    }
-
-    @PostMapping("/batch-upload")
-    public Result<List<String>> batchUpload(@RequestParam("files") MultipartFile[] files) {
-        List<String> urls = fileService.batchUpload(files);
-        return Result.success(urls);
-    }
-}
-```
-**反例**:
-```java
-@PostMapping("/upload")
-public Result<String> upload(HttpServletRequest request) {
-    // 手动解析 multipart 请求
-    MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
-    MultipartFile file = multipartRequest.getFile("file");
-    // 没有文件大小和类型校验
-    // 没有限制上传格式
-    String path = "/upload/" + file.getOriginalFilename();
-    file.transferTo(new File(path));  // 直接使用原始文件名，存在安全风险
-    return Result.success(path);
-}
-```
-
-### R12: 接口必须有 Swagger/OpenAPI 注解
+### R8: 接口必须有 Swagger/OpenAPI 注解
 **级别**: 推荐
-**描述**: 所有接口必须添加 Swagger/OpenAPI 注解，描述接口用途、参数含义和返回值，便于生成 API 文档。
+**描述**: 所有接口必须添加 Swagger/OpenAPI 注解，根据项目中的 swagger 版本使用正确的注解，描述接口用途、参数含义和返回值，便于生成 API 文档。
 **正例**:
 ```java
 @RestController
@@ -644,9 +452,4 @@ public class UserController {
         return Result.success(userService.create(dto));
     }
 }
-
-// 使用过时的 Swagger 2 注解（应迁移到 OpenAPI 3）
-@ApiOperation(value = "获取用户")
-@GetMapping("/{id}")
-public Result<UserVO> getById(@PathVariable Long id) { ... }
 ```

@@ -1,15 +1,27 @@
+---
+id: java-best-practices
+title: Java - 最佳实践
+tags: [java, best-practices, concurrency, exception]
+trigger:
+  extensions: [.java]
+  frameworks: []
+skip:
+  keywords: []
+---
+
 # Java - 最佳实践
 
 ## 适用范围
 - 适用于所有 Java/Spring Boot 项目的编码实践
 - 与编码风格规范、设计模式规范配合使用
-- 聚焦日常开发中高频出现的问题
+- 聚焦日常开发中容易引入隐性 bug 的实践
+- try-with-resources、CollectionUtils.isEmpty、SLF4J 等基础实践不再列出，AI 默认遵守
 
 ## 规则
 
 ### R1: 不捕获 Exception 基类
 **级别**: 必须
-**描述**: catch 块必须捕获具体异常类型，不捕获 Exception 基类。
+**描述**: catch 块必须捕获具体异常类型，不捕获 Exception 基类。捕获 Exception 会吞掉预期外的异常（如 OOM、NullPointerException），导致问题难以排查。
 **正例**:
 ```java
 try {
@@ -28,46 +40,9 @@ try {
 }
 ```
 
-### R2: 使用 try-with-resources 管理 IO 资源
-**级别**: 必须
-**描述**: 实现 AutoCloseable 的资源必须使用 try-with-resources。
-**正例**:
-```java
-try (InputStream is = new FileInputStream("data.txt");
-     BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
-    return reader.lines().collect(Collectors.toList());
-}
-```
-**反例**:
-```java
-InputStream is = null;
-try {
-    is = new FileInputStream("data.txt");
-    // ...
-} finally {
-    if (is != null) { is.close(); }
-}
-```
-
-### R3: 集合判空使用工具方法
-**级别**: 必须
-**描述**: 使用 CollectionUtils.isEmpty() 或 list.isEmpty() 判空，不使用 null 判断。
-**正例**:
-```java
-if (CollectionUtils.isEmpty(userList)) {
-    return Collections.emptyList();
-}
-```
-**反例**:
-```java
-if (userList == null || userList.size() == 0) {
-    return new ArrayList<>();
-}
-```
-
-### R4: 字符串拼接使用 StringBuilder 或 String.format
+### R2: 字符串拼接使用 StringBuilder 或 String.format
 **级别**: 推荐
-**描述**: 循环中字符串拼接使用 StringBuilder，格式化使用 String.format。
+**描述**: 循环中字符串拼接使用 StringBuilder，格式化使用 String.format。编译器只会优化单行内的 + 拼接，循环中的 + 每次都创建新对象。
 **正例**:
 ```java
 StringBuilder sb = new StringBuilder();
@@ -86,9 +61,9 @@ for (String item : items) {
 }
 ```
 
-### R5: 线程池使用 ThreadPoolExecutor
+### R3: 线程池使用 ThreadPoolExecutor
 **级别**: 必须
-**描述**: 禁止使用 Executors 创建线程池，必须使用 ThreadPoolExecutor 明确参数。
+**描述**: 禁止使用 Executors 创建线程池，必须使用 ThreadPoolExecutor 明确参数。Executors.newFixedThreadPool 使用无界队列，可能导致 OOM。
 **正例**:
 ```java
 @Bean
@@ -106,9 +81,9 @@ ExecutorService pool = Executors.newFixedThreadPool(10);
 // 无界队列可能导致 OOM
 ```
 
-### R6: 日期使用 LocalDateTime
+### R4: 日期使用 LocalDateTime
 **级别**: 必须
-**描述**: 使用 java.time 包（LocalDateTime/LocalDate），不使用 java.util.Date。
+**描述**: 使用 java.time 包（LocalDateTime/LocalDate），不使用 java.util.Date。Date 是可变对象且线程不安全，月份从 0 开始容易出错。
 **正例**:
 ```java
 LocalDateTime now = LocalDateTime.now();
@@ -123,9 +98,9 @@ cal.setTime(now);
 cal.add(Calendar.DAY_OF_MONTH, 1);
 ```
 
-### R7: 金额使用 BigDecimal
+### R5: 金额使用 BigDecimal
 **级别**: 必须
-**描述**: 金额计算使用 BigDecimal，禁止使用 float 或 double。
+**描述**: 金额计算使用 BigDecimal，禁止使用 float 或 double。浮点数存在精度丢失，0.1 + 0.2 != 0.3。
 **正例**:
 ```java
 BigDecimal price = new BigDecimal("19.90");
@@ -138,23 +113,9 @@ double price = 19.90;
 double total = price * 3; // 59.699999999999996
 ```
 
-### R8: 集合转数组使用正确方式
+### R6: Map 使用 computeIfAbsent
 **级别**: 推荐
-**描述**: 集合转数组使用 list.toArray(new String[0])。
-**正例**:
-```java
-List<String> names = Arrays.asList("Alice", "Bob");
-String[] array = names.toArray(new String[0]);
-```
-**反例**:
-```java
-List<String> names = Arrays.asList("Alice", "Bob");
-String[] array = names.toArray(new String[names.size()]);
-```
-
-### R9: Map 使用 computeIfAbsent
-**级别**: 推荐
-**描述**: 使用 computeIfAbsent 替代 containsKey + put 组合。
+**描述**: 使用 computeIfAbsent 替代 containsKey + put 组合，一行代码解决"不存在则创建"的场景。
 **正例**:
 ```java
 Map<String, List<Order>> orderMap = new HashMap<>();
@@ -169,9 +130,9 @@ if (!orderMap.containsKey(userId)) {
 orderMap.get(userId).add(order);
 ```
 
-### R10: 使用 Optional 替代 null 返回值
+### R7: 使用 Optional 替代 null 返回值
 **级别**: 推荐
-**描述**: 方法返回值可能为空时使用 Optional 包装。
+**描述**: 方法返回值可能为空时使用 Optional 包装，强制调用方处理空值情况。
 **正例**:
 ```java
 public Optional<User> findById(Long id) {
@@ -189,9 +150,9 @@ public User findById(Long id) {
 user.getName();
 ```
 
-### R11: 避免在循环中创建大量对象
+### R8: 避免在循环中创建大量对象
 **级别**: 必须
-**描述**: 循环内避免重复创建可复用对象，将创建移到循环外。
+**描述**: 循环内避免重复创建可复用对象（SimpleDateFormat、DecimalFormat、Pattern 等），将创建移到循环外。
 **正例**:
 ```java
 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -207,9 +168,9 @@ for (Order order : orders) {
 }
 ```
 
-### R12: 使用枚举替代魔法值
+### R9: 使用枚举替代魔法值
 **级别**: 必须
-**描述**: 魔法数字和字符串常量必须定义为枚举。
+**描述**: 魔法数字和字符串常量必须定义为枚举，避免散落的硬编码值难以理解和维护。
 **正例**:
 ```java
 public enum UserStatus {
@@ -223,55 +184,4 @@ if (user.getStatus() == UserStatus.ACTIVE.getCode()) { ... }
 ```java
 if (user.getStatus() == 1) { ... }
 if ("ACTIVE".equals(user.getStatusStr())) { ... }
-```
-
-### R13: 序列化使用 JSON 而非 Java 序列化
-**级别**: 必须
-**描述**: 对象序列化使用 Jackson/Gson 等 JSON 方式，不使用 Java 原生序列化。
-**正例**:
-```java
-ObjectMapper mapper = new ObjectMapper();
-String json = mapper.writeValueAsString(user);
-User copy = mapper.readValue(json, User.class);
-```
-**反例**:
-```java
-ByteArrayOutputStream bos = new ByteArrayOutputStream();
-ObjectOutputStream oos = new ObjectOutputStream(bos);
-oos.writeObject(user);
-```
-
-### R14: 日志使用 SLF4J 门面
-**级别**: 必须
-**描述**: 日志调用使用 SLF4J（@Slf4j），不直接依赖 Log4j/Logback。
-**正例**:
-```java
-@Slf4j
-@Service
-public class UserService {
-    public void create(UserDTO dto) {
-        log.info("创建用户: username={}", dto.getUsername());
-    }
-}
-```
-**反例**:
-```java
-import org.apache.log4j.Logger;
-public class UserService {
-    private Logger logger = Logger.getLogger(UserService.class);
-}
-```
-
-### R15: 避免使用 System.out.println
-**级别**: 必须
-**描述**: 禁止使用 System.out/err 做日志输出，必须使用日志框架。
-**正例**:
-```java
-log.info("处理完成, count={}", count);
-log.error("处理失败, orderId={}", orderId, e);
-```
-**反例**:
-```java
-System.out.println("处理完成, count=" + count);
-e.printStackTrace();
 ```

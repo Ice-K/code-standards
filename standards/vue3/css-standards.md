@@ -1,3 +1,14 @@
+---
+id: vue3-css-standards
+title: Vue3 - CSS/LESS 样式规范
+tags: [vue3, css, less, bem, scoped, responsive]
+trigger:
+  extensions: [.vue, .css, .less]
+  frameworks: [vue3]
+skip:
+  keywords: [SQL, Mapper, 数据库, 后端, Spring, MyBatis, REST, 接口]
+---
+
 # Vue3 - CSS/LESS 样式规范
 
 ## 适用范围

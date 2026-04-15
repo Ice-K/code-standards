@@ -1,3 +1,14 @@
+---
+id: vue3-project-structure
+title: Vue3 - 项目目录结构约定
+tags: [vue3, project-structure, vite, directory, routing]
+trigger:
+  extensions: [.vue, .ts, .js]
+  frameworks: [vue3]
+skip:
+  keywords: [SQL, Mapper, 数据库, 后端, Spring, MyBatis]
+---
+
 # Vue3 - 项目目录结构约定
 
 ## 适用范围

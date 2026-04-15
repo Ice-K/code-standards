@@ -1,3 +1,14 @@
+---
+id: typescript-type-design
+title: TypeScript - 类型设计规范
+tags: [typescript, type-design, discriminated-union, utility-type, conditional-type]
+trigger:
+  extensions: [.ts, .tsx]
+  frameworks: []
+skip:
+  keywords: [SQL, Mapper, 数据库, 后端, Spring, MyBatis, CRUD, 增删改查]
+---
+
 # TypeScript - 类型设计规范
 
 ## 适用范围

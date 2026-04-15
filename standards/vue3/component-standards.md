@@ -1,3 +1,14 @@
+---
+id: vue3-component-standards
+title: Vue3 - 组件编写规范
+tags: [vue3, component, script-setup, props, emit]
+trigger:
+  extensions: [.vue]
+  frameworks: [vue3]
+skip:
+  keywords: [SQL, Mapper, 数据库, 配置文件, yml, properties, 后端]
+---
+
 # Vue3 - 组件编写规范
 
 ## 适用范围

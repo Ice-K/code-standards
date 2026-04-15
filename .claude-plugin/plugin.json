@@ -1,19 +1,24 @@
 {
   "name": "code-standards",
-  "description": "编码规范守卫插件 - 为 AI 编程助手提供 Java/Spring/Vue 等语言的编码规范，确保生成的代码符合业界标准和团队约定",
-  "version": "0.1.0",
+  "description": "编码规范守卫 - 检测语言/框架，按需加载编码规范，支持 Profile 分级、Context 感知、精确规则注入、多平台适配。覆盖 Java/SpringBoot/Vue3/TypeScript/CSS。",
+  "version": "0.2.0",
   "author": {
-    "name": "super-every-code"
+    "name": "WangPeng",
+    "email": "super-every-code"
   },
-  "homepage": "https://github.com/user/code-standards",
+  "homepage": "https://github.com/Ice-K/code-standards",
+  "repository": "https://github.com/Ice-K/code-standards",
   "license": "MIT",
+  "category": "development",
   "keywords": [
     "coding-standards",
     "java",
     "springboot",
-    "springcloud",
     "vue",
+    "typescript",
     "code-review",
     "best-practices"
-  ]
+  ],
+  "skills": "./skills/",
+  "commands": "./commands/"
 }
